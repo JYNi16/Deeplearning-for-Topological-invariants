@@ -15,8 +15,10 @@ class CNN_TI(Model):
 
     def call(self,x):
         x = self.c1(x)
+        print("x1 is:", x.shape)
         x = self.c2(x)
         x = self.f1(x)
+        print("x2 is:", x.shape)
         x = self.dr1(x)
         x = self.d1(x)
         x = self.d2(x)

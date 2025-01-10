@@ -1,4 +1,13 @@
 import numpy as np
+import os
+
+save_path = "train_data1"
+if os.path.exists(save_path):
+    print("save path {} exist".format(save_path))
+else:
+    print("save path {} not exist".format(save_path))
+    os.makedirs(save_path)
+    print("now makedir the save_path")
 
 class SSHmodel():
     def __init__(self):
@@ -69,8 +78,12 @@ class SSHmodel():
             V = np.array([hx_list, hy_list]).T
             P = (0, 0)
             wn = self.wn_PnPoly(P, V)
+            
+            
+            print("winding number is:", wn)
 
-            np.savez("./train_data1/train.{}.npz".format(i), s=V, label = wn)
+
+            np.savez(save_path + "/train.{}.npz".format(i), s=V, label = wn)
 
 
 if __name__=="__main__":
