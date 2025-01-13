@@ -11,16 +11,15 @@ class HamData(Dataset):
     def __init__(self, path):
         self.list = []
         self.list.extend(glob.glob(os.path.join(path, "*.npz")))
-        self.batch_size = 50
+        #self.batch_size = 50
     
     
     def __getitem__(self, index):
         
-        print("data path is:", self.list)
         data_path = self.list[index]
         data = np.load(data_path)
         
-        Ham = data["s"]
+        Ham = np.reshape(data["s"], (1, 33, 2))
         wn = data["label"]
         
         if wn == "0":
@@ -28,10 +27,10 @@ class HamData(Dataset):
         elif wn == "1":
             label = 1
         else:
-            label = 2
+            label = -1
             
         
-        return Ham, wn 
+        return Ham, label 
     
     def __len__(self):
         return len(self.list)
@@ -40,15 +39,17 @@ class HamData(Dataset):
     
 
 if __name__=="__main__":
-    path = "./train_data1"
+    path = "./val_test1"
+    #print(list[:int(len(list)*0.75)])
+    
     train_data = HamData(path)
     
-    data = np.load(path + "/train.0.npz")
+    #data = np.load(path + "/train.0.npz")
     
-    print("data is:", data["s"])
+    #print("data is:", data["s"])
     
-    #train_loader = DataLoader(train_data, batch_size=1, shuffle=True)
+    train_loader = DataLoader(train_data, batch_size=2, shuffle=True)
     
-    #for s, label in train_loader:
-    #    print("i.shape is:", s.shape)
+    for s, label in train_loader:
+        print("i.shape is:", s.shape)
 

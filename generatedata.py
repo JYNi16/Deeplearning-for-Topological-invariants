@@ -1,13 +1,21 @@
 import numpy as np
 import os
 
+def mk_path(save_path):
+    if os.path.exists(save_path):
+        print("save path {} exist".format(save_path))
+    else:
+        print("save path {} not exist".format(save_path))
+        os.makedirs(save_path)
+        print("now makedir the save_path")
+
+
 save_path = "train_data1"
-if os.path.exists(save_path):
-    print("save path {} exist".format(save_path))
-else:
-    print("save path {} not exist".format(save_path))
-    os.makedirs(save_path)
-    print("now makedir the save_path")
+save_val_path = "val_test1"
+
+mk_path(save_path)
+mk_path(save_val_path)
+
 
 class SSHmodel():
     def __init__(self):
@@ -56,7 +64,7 @@ class SSHmodel():
 
         for i in range(self.n_casos):
             # "Hamiltonian parameters"
-            max_c = 2
+            max_c = 1
             axx = (np.random.random(max_c + 1) * 2) - 1
             bxx = (np.random.random(max_c + 1) * 2) - 1
             ayy = (np.random.random(max_c + 1) * 2) - 1
@@ -82,8 +90,11 @@ class SSHmodel():
             
             print("winding number is:", wn)
 
+            if i % 3 == 0:
+                np.savez(save_val_path + "/{}.npz".format(i), s=V, label = wn)
+            else:
+                np.savez(save_path + "/{}.npz".format(i), s=V, label = wn)
 
-            np.savez(save_path + "/train.{}.npz".format(i), s=V, label = wn)
 
 
 if __name__=="__main__":

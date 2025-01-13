@@ -1,67 +1,66 @@
 import numpy as np
-import tensorflow as tf
-from tensorflow import keras
-from model import CNN_TI
-from keras import layers, optimizers, metrics, losses
+import torch 
+from torch import nn
+from torch.utils.data import Dataset, DataLoader
+from model_torch import CNN_TI
 from dataloader import HamData
 
+path_train = "train_data1"
+path_val = "val_test1"
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu") 
 
-# net = tf.keras.Sequential()
-# net.add(layers.Conv2D(40, kernel_size=(2, 2), activation='relu', input_shape=(11, 6, 1)))
-# #model.add(MaxPooling2D(pool_size=(2,2)))
-# net.add(layers.Conv2D(1, kernel_size=(1, 1), activation='relu'))
-# net.add(layers.Flatten())
-# net.add(layers.Dense(2, activation='relu'))
-# net.add(layers.Dense(1, activation='linear'))
-#
+val_data = HamData(path_val)
+val_data_loader = DataLoader(val_data, batch_size = 64, shuffle = True)
+
+train_data = HamData(path_train)
+train_data_loader = DataLoader(train_data, batch_size = 256, shuffle = True)
+
 model = CNN_TI()
-#
-# def train(train_data):
-#     loss_all = 0
-#     for epoch in range(25):
-#         for step, data in enumerate(train_data):
-#             with tf.GradientTape() as tape:
-#                 x, y = data
-#                 x = tf.reshape(x, [-1, 12, 12, 1])
-#                 out = model(x)
-#                 y_onehot = tf.one_hot(y, depth=3)
-#                 loss = tf.keras.losses.categorical_crossentropy(from_logits=True, y_true=y_onehot, y_pred=out)
-#                 loss = tf.reduce_mean(loss)
-#                 grads = tape.gradient(loss, model.trainable_variables)
-#                 optimizer.apply_gradients(zip(grads, model.trainable_variables))
-#                 acc_meter.update_state(tf.argmax(out, axis=1), y)
-#             if (step % 10 == 0):
-#                 print("step is:", step)
-#         print("epoch:", epoch, "| Loss is:%.4f" % (loss), "|Accuracy is:%.4f" % (acc_meter.result().numpy()))
-#         acc_meter.reset_states()
-#     tf.saved_model(model, "saved/1")
+loss_function = nn.MSELoss()
+model.to(device)
+
+optimizer = torch.optim.SGD(model.parameters(), lr = 0.005)
 
 
-def train_wn(train_data):
-    optimizer = optimizers.Adam(lr=0.001)
-    #model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
-    for epoch in range(25):
-        loss_all = 0
-        acc = 0
-        for step, data in enumerate(train_data):
-            with tf.GradientTape() as tape:
-                x, y = data
-                x = tf.reshape(x, [-1, 11,6, 1])
-                out = model(x)
-                loss = losses.mean_squared_error(y, out)
-                loss = tf.reduce_mean(loss)
-            grads = tape.gradient(loss, model.trainable_variables)
-            optimizer.apply_gradients(zip(grads, model.trainable_variables))
-            loss_all += loss
-            acc += 1 - loss
-            #print("acc is:", acc)
-            if (step % 100 == 0):
-                print("step is:", step)
-        print("epoch:", epoch, "| Loss is:%.4f" % (loss_all/step), "| Acc is:%.4f"%(acc/step))
+def val_test():
+    model.eval()
+    torch.set_grad_enabled(False)
+
+    loss_val_all = 0
+    step = 0
+
+    for x, y in val_data_loader:
+        step +=1 
+        y_pre = model(x.to(device, torch.float32))
+        loss_val_all += loss_function(y_pre,  y.to(device, torch.float32))
+    
+    return loss_val_all.data.cpu().numpy()/step 
+
+
+def train_wn():
+    loss_all = 0
+    step = 0
+    
+    for x, y in train_data_loader:
+        step += 1
+        torch.set_grad_enabled(True)
+        model.train()
+        optimizer.zero_grad()
+        y_pre = model(x.to(device, torch.float32))
+        loss = loss_function(y_pre,  y.to(device, torch.float32))
+        loss.backward()
+        optimizer.step()
+
+        loss_all += loss
+        
+    return loss_all.data.cpu().numpy()/step 
 
 
 if __name__=="__main__":
-    path = "E:/deeplearning\depp learning for Phys/Deep-Learning-Topological-Invariants/train_data1"
-    data = HamData(path)
-    db_train = data.createdata()
-    train_wn(db_train)
+    for epoch in range(50):
+        loss_train = train_wn()
+        print("epoch is {} | train loss is:{}".format(epoch, loss_train))
+        loss_val = val_test()
+        print("epoch is {} | val loss is:{}".format(epoch, loss_val))
+
+

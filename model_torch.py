@@ -27,7 +27,7 @@ class CNN_TI(nn.Module):
         
         self.l1 = nn.Linear(32, 16)
         self.r3 = nn.ReLU()
-        self.l2 = nn.Linear(16, 3)
+        self.l2 = nn.Linear(16, 1)
     
     def forward(self, x):
         
